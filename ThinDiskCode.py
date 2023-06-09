@@ -9,12 +9,21 @@ def mysqrt(x): return np.sqrt(x)
 def horizon(spin):
     return 1 + np.sqrt(1-spin**2)
 
+def horizon_minus(spin):
+    return 1 - np.sqrt(1-spin**2)
+
 # Innermost Stable Circular orbit in Kerr metric
 def isco(spin):
     Z1 = 1.0 + np.power(1.0 - spin * spin,1./3.) * (np.power(1.0+spin,1./3.) + np.power(1.0 - spin,1./3.))
     Z2 = np.sqrt(3.0 * spin * spin + Z1 * Z1)
 
     return 3.0 + Z2 - np.sqrt( (3.0 - Z1) * (3.0 + Z1 + 2.0 * Z2) )
+
+def isco_minus(spin):
+    Z1 = 1.0 + np.power(1.0 - spin * spin,1./3.) * (np.power(1.0+spin,1./3.) + np.power(1.0 - spin,1./3.))
+    Z2 = np.sqrt(3.0 * spin * spin + Z1 * Z1)
+
+    return 3.0 + Z2 + np.sqrt( (3-Z1) * (3.0 + Z1 + 2.0 * Z2) )
 
 # Keplerian omega at given r 
 def kepnu(r,a):
@@ -24,6 +33,26 @@ def kepnu(r,a):
 # Efficienty of a NT disk 
 def eta(spin):
     return (1 - np.sqrt(1-2/(3*isco(spin))))
+
+
+# important radii in kerr metric
+
+def ergosphere(spin,theta):
+    return (1+np.sqrt(1-(spin**2)*(np.cos(theta))**2))
+
+def photon(spin):
+    return 2*(1+np.cos(2/3 * np.arccos(-spin)))
+
+
+def photon_minus(spin):
+    return 2*(1+np.cos(2/3 * np.arccos(spin)))
+
+def mb(spin):
+    return (2-spin+ 2* np.sqrt((1-spin)))
+
+
+def mb_minus(spin):
+    return (2 + spin+ 2* np.sqrt((1+spin)))
 
 
 ## CONSTANTS AND UNIT CONVERSION
@@ -51,7 +80,7 @@ def MdotEdd(M,spin):
 # Q with fix from Page&Thorne 76 (exp is + instead of -)
 # L from Page&Thorne 76, as a separate function
 class calculate_kerr_coefficients():
-    def __init__ (self,a,r):
+    def __init__ (self,a,r,rin=0):
         
         self.A = 1.+((2.*((a**2)*(r**-3.)))+((a**2)*(r**-2.)))
         self.B = 1.+(a*(mysqrt((r**-3.))))
@@ -67,7 +96,10 @@ class calculate_kerr_coefficients():
         r2 = (mysqrt(2.))*(np.cos(0.333333*(np.arccos(a)) + np.pi/3))
         r3 = - (mysqrt(2.))*(np.cos(0.333333*(np.arccos(a))))
         
-        Risco = isco(a)
+        if (rin == 0):
+            Risco = isco(a)
+        else:
+            Risco = rin
         
         aux0 = np.log(((((2.**-0.5)*(mysqrt(r)))-r1)/(((2.**-0.5)*(mysqrt(Risco)))-r1)))
         aux1 = np.log(((((2.**-0.5)*(mysqrt(r)))-r2)/(((2.**-0.5)*(mysqrt(Risco)))-r2)))
@@ -83,9 +115,9 @@ class calculate_kerr_coefficients():
 
 # Inner
 class inner_region:
-    def __init__(self,r,a,m,mdot,alpha):
+    def __init__(self,r,a,m,mdot,alpha,rin=0):
         
-        coefs = calculate_kerr_coefficients(a,r)
+        coefs = calculate_kerr_coefficients(a,r,rin)
 
         foo = 1/coefs.B*np.sqrt(coefs.C)*1/coefs.H*coefs.Q
         self.H = 5.5e4 * m * mdot * foo
@@ -109,8 +141,8 @@ class inner_region:
 # Middle region
 
 class middle_region():
-    def __init__(self,r,a,m,mdot,alpha):
-        coefs = calculate_kerr_coefficients(a,r)
+    def __init__(self,r,a,m,mdot,alpha,rin=0):
+        coefs = calculate_kerr_coefficients(a,r,rin)
         
         foo = np.power(coefs.B,-1/5)*np.sqrt(coefs.C)*np.power(coefs.D,-1/10)*np.power(coefs.H,-1/2)*np.power(coefs.Q,1/5)
         self.H = 1.3e2*np.power(alpha,-1/10)*np.power(m,9/10)*np.power(mdot,1/5) * np.power(r,21/20) * foo
@@ -135,9 +167,9 @@ class middle_region():
 
 # Outer region
 class outer_region:
-    def __init__(self,r,a,m,mdot,alpha):
+    def __init__(self,r,a,m,mdot,alpha,rin=0):
  
-        coefs = calculate_kerr_coefficients(a,r)
+        coefs = calculate_kerr_coefficients(a,r,rin)
         
         foo = np.power(coefs.B,-3/20)*np.sqrt(coefs.C)*np.power(coefs.D,-1/10)*np.power(coefs.H,-19/40)*np.power(coefs.Q,3/20)
         self.H = 6.88e2*np.power(alpha,-1/10)*np.power(m,9/10)*np.power(mdot,3/20) * np.power(r,9/8) * foo
@@ -161,8 +193,8 @@ class outer_region:
 
 ## Flux
 
-def flux(r,m,a,mdot):
-    coefs = calculate_kerr_coefficients(a,r)
+def flux(r,m,a,mdot,rin=0):
+    coefs = calculate_kerr_coefficients(a,r,rin)
     Mdot = Mdot_f(mdot,m)
     M = M_f(m)
     fr = coefs.Q/(coefs.B*np.sqrt(coefs.C))
