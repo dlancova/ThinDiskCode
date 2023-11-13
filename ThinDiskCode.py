@@ -1,5 +1,7 @@
 import numpy as np
 
+kappa_cgstogu = 1.096795e-22
+
 #help:
 def mysqrt(x): return np.sqrt(x)
 
@@ -202,6 +204,50 @@ def flux(r,m,a,mdot,rin=0):
     return foo*fr
 
 
+class schw_metric:
+    def __init__(self,r,theta):
+        self.gtt = (1-2/r)
+        self.grr = 1/(1-2/r)
+        self.gthth = r**2
+        self.gpp = r**2*np.sin(theta)**2
+        self.ell= (1/r**(3/2))*(self.gff)/(self.gtt)
+
+# photon trapping radius from Kato's book (where radiation advection starts to dominate)
+def rtrap(m,h,mdot):
+    rg = m*G*Msun/(np.power(c,2))
+    return 6./2. * h * mdot 
+
+def OmegaK(r,m):
+    R = r * G * M_f(m)/np.power(c,2)
+    foo = G * M_f(m)/np.power(R,3)
+    return np.sqrt(foo)
+
+def viscous_heating(r,mdot):
+    foo = 3/4*np.pi
+    return foo * np.power(r,-3/2) * mdot
+
+def rad_cooling(r,sigma,mdot,alpha = 0.1):
+    kappa = 1
+    foo = 8/(np.sqrt(2*np.pi)*kappa)
+    return foo * np.power(r,-9/4) * np.sqrt(mdot/(alpha*sigma))
 
 
+def adv_cooling(r,Sigma,mdot,alpha = 0.1):
+    xi = 1
+    foo = xi/(4*np.pi*np.pi) * np.power(r,-7/2)
+    return foo * np.power(mdot,2)/(alpha*Sigma)
+
+class orb_freqs:
+    def __init__ (self,r,m,a):
+        gmc2 = G * M_f(m)/np.power(c,2)
+        rstar = r*gmc2
+        self.fK = np.power(c,3)/(2*np.pi*G*M_f(m)) * (1/(a + np.power(r,3/2)))
         
+        # radial epicyclic
+        bar = 8*a*(np.power(1/r,3/2)) - 3*a**2*(np.square(1/r))
+        foo = np.sqrt (1-6/(r)+bar)
+        self.fr = self.fK * foo 
+
+        # vertical epicyclic
+        foo = 1-4*a*np.power(1/r,3/2)  + 3*a**2*np.square(1/r) 
+        self.fth = self.fK * foo
