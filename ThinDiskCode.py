@@ -203,6 +203,9 @@ def flux(r,m,a,mdot,rin=0):
     foo = 3*G*M*Mdot/(8*np.pi*np.power(r,3))
     return foo*fr
 
+# Newtonian formula for flux
+def flux_SS(r,m,mdot,rinner=6):
+    return 3*G*m*mdot/(8*np.pi*r**(3))*(1-np.sqrt(rinner/r))
 
 class schw_metric:
     def __init__(self,r,theta):
