@@ -5,7 +5,7 @@ kappa_cgstogu = 1.096795e-22
 #help:
 def mysqrt(x): return np.sqrt(x)
 
-## IMPORTANT R IN KERR
+## IMPORTANT Rs IN KERR
 
 # Event Horizon radius in Kerr metric
 def horizon(spin):
@@ -254,3 +254,15 @@ class orb_freqs:
         # vertical epicyclic
         foo = 1-4*a*np.power(1/r,3/2)  + 3*a**2*np.square(1/r) 
         self.fth = self.fK * foo
+
+def ell_Kep_GR(r,a,rin=1):
+    rin = isco(a)
+    coefs = calculate_kerr_coefficients(a,r,rin)
+    foo = coefs.F/np.sqrt(coefs.C)
+    return np.sqrt(r)*foo
+
+def Omega_Kep_GR(r,a,rin=1):
+    rin = isco(a)
+    coefs = calculate_kerr_coefficients(a,r,rin)
+    foo = 1/coefs.B
+    return np.power(r,-3./2.)*foo
