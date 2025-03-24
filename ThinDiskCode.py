@@ -212,7 +212,7 @@ class schw_metric:
         self.gtt = (1-2/r)
         self.grr = 1/(1-2/r)
         self.gthth = r**2
-        self.gpp = r**2*np.sin(theta)**2
+        self.gff = r**2*np.sin(theta)**2
         self.ell= (1/r**(3/2))*(self.gff)/(self.gtt)
 
 # photon trapping radius from Kato's book (where radiation advection starts to dominate)
